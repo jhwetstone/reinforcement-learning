@@ -13,11 +13,16 @@ class ActionSelectionRule:
     def reset(self):
         return
 
+    @staticmethod
+    def ids_of_max_value(input_arr: np.ndarray[float]) -> int:
+        max_val = np.max(input_arr)
+        return np.where(input_arr == max_val)[0]
+
 
 class Greedy(ActionSelectionRule):
 
     def select_action(self, value_estimates: np.ndarray[float]) -> int:
-        return np.argmax(value_estimates)
+        return np.random.choice(self.ids_of_max_value(value_estimates))
 
 
 class Softmax(ActionSelectionRule):
@@ -36,7 +41,7 @@ class EpsilonGreedy(ActionSelectionRule):
         rand = np.random.uniform(0, 1)
         if rand < self.epsilon:
             return np.random.choice(len(value_estimates))
-        return np.argmax(value_estimates)
+        return np.random.choice(self.ids_of_max_value(value_estimates))
 
 
 class UpperConfidenceBound(ActionSelectionRule):
@@ -52,10 +57,10 @@ class UpperConfidenceBound(ActionSelectionRule):
         if min(self.action_counter) == 0:
             next_action = np.argmin(self.action_counter)
         else:
-            next_action = np.argmax(
+            next_action = np.random.choice(self.ids_of_max_value(
                 np.array(value_estimates)
                 + self.c * np.sqrt(np.log(self.time_steps) / self.action_counter)
-            )
+            ))
 
         self.action_counter[next_action] += 1
         self.time_steps += 1
