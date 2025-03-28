@@ -46,16 +46,30 @@ class NArmedBandit:
 
 class ArmedBanditTask:
 
-    def __init__(self, n_arms: int, stationary: bool = True, seed: int = None):
+    def __init__(
+        self,
+        n_arms: int,
+        stationary: bool = True,
+        seed: int = None,
+        static_vals: bool = False,
+    ):
         self.n_arms = n_arms
         self.stationary = stationary
         if seed:
             np.random.seed(seed)
-        self.bandit_values = np.random.normal(loc=0.0, scale=1.0, size=n_arms)
+
+        if static_vals:
+            self.bandit_values = np.zeros(n_arms)
+        else:
+            self.bandit_values = np.random.normal(loc=0.0, scale=1.0, size=n_arms)
+
         self.optimal_action = np.argmax(self.bandit_values)
 
     def get_reward_signal(self, arm_id: int) -> float:
-        return self.bandit_values[arm_id] + np.random.normal(loc=0.0, scale=1.0)
+        if self.stationary:
+            return self.bandit_values[arm_id] + np.random.normal(loc=0.0, scale=1.0)
+        else:
+            return self.bandit_values[arm_id]
 
     def simulate_bandit_nsteps(self, bandit: NArmedBandit, n_steps: int = 1000):
         rewards_observed = []
@@ -109,12 +123,13 @@ class ArmedBanditTestBed:
         n_tasks: int,
         n_steps: int,
         stationary=True,
+        static_vals=False,
     ):
         n_bandits = len(bandits)
         sum_rewards = np.zeros((n_bandits, n_steps))
         sum_optimal = np.zeros((n_bandits, n_steps))
         for i in range(n_tasks):
-            task = ArmedBanditTask(n_arms, stationary)
+            task = ArmedBanditTask(n_arms, stationary, static_vals=static_vals)
             for j, bandit in enumerate(bandits):
                 bandit.reset()
                 rewards, optimal = task.simulate_bandit_nsteps(bandit, n_steps=n_steps)
@@ -133,11 +148,10 @@ class ArmedBanditTestBed:
         plt.title(title)
         plt.legend(loc="upper left")
         plt.xlabel("Steps")
-        plt.savefig(f"{title.replace(' ', '_')}_{'_'.join([bandit.label for bandit in bandits])}.png")
+        plt.savefig(
+            f"{title.replace(' ', '_')}_{'_'.join([bandit.label for bandit in bandits])}.png"
+        )
         plt.show()
-
-
-# def plot_optimal_actions(optimal_actions: np.ndarray[int]):
 
 
 def main():
@@ -146,6 +160,7 @@ def main():
     n_steps = 10000
     n_tasks = 2000
     stationary = False
+    static_vals = True
     # Exercise 2.5
     bandits = [
         NArmedBandit(
@@ -165,7 +180,9 @@ def main():
     ]
 
     test_bed = ArmedBanditTestBed()
-    test_bed.simulate_bandits(bandits, n_arms, n_tasks, n_steps, stationary)
+    test_bed.simulate_bandits(
+        bandits, n_arms, n_tasks, n_steps, stationary, static_vals
+    )
 
 
 # %%
