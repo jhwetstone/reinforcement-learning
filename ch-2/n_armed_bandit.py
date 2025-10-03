@@ -78,7 +78,7 @@ class ArmedBanditTask:
         optimal_actions = []
         regret_observed = []
         for i in range(n_steps):
-            bandit, rewards_observed, optimal_actions = self.simulate_bandit_one_step(
+            bandit, rewards_observed, optimal_actions, regret_observed = self.simulate_bandit_one_step(
                 bandit=bandit,
                 rewards_observed=rewards_observed,
                 optimal_actions=optimal_actions,
@@ -112,9 +112,9 @@ class ArmedBanditTask:
         rewards_observed.append(reward)
         optimal_actions.append(arm_id in self.optimal_actions)
         regret_observed.append(
-            self.get_reward_signal(np.random.choice(self.optimal_actions)) - reward
+            self.bandit_values[np.random.choice(self.optimal_actions)] - reward
         )
-        return bandit, rewards_observed, optimal_actions
+        return bandit, rewards_observed, optimal_actions, regret_observed
 
     def random_walk_update(self):
         # For non-stationary environment simulation
