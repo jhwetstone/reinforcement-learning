@@ -4,14 +4,14 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from action_selection_rule import (
+from ch_2.action_selection_rule import (
     ActionSelectionRule,
     Greedy,
     EpsilonGreedy,
     UpperConfidenceBound,
     Softmax,
 )
-from value_estimator import (
+from ch_2.value_estimator import (
     ExponentialRecencyWeightedAverage,
     ValueEstimator,
     SampleAverage,

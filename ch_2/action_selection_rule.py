@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 import numpy as np
-from value_estimator import GradientBandit
+from ch_2.value_estimator import GradientBandit
 
 
 class ActionSelectionRule:
@@ -17,12 +17,22 @@ class ActionSelectionRule:
     def ids_of_max_value(input_arr: np.ndarray[float]) -> int:
         max_val = np.max(input_arr)
         return np.where(input_arr == max_val)[0]
+    
+    @abstractmethod
+    def get_action_probabilities(value_estimates: np.ndarray[float]) -> np.ndarray[float]:
+        pass
 
 
 class Greedy(ActionSelectionRule):
 
     def select_action(self, value_estimates: np.ndarray[float]) -> int:
         return np.random.choice(self.ids_of_max_value(value_estimates))
+    
+    def get_action_probabilities(self, value_estimates: np.ndarray[float]) -> np.ndarray[float]:
+        possibilities = self.ids_of_max_value(value_estimates)
+        probs = np.zeros(len(value_estimates))
+        probs[possibilities] = 1 / len(possibilities)
+        return probs
 
 
 class Softmax(ActionSelectionRule):
@@ -30,6 +40,9 @@ class Softmax(ActionSelectionRule):
     def select_action(self, value_estimates: np.ndarray[float]) -> int:
         probabilities = GradientBandit.get_softmax_probs(value_estimates)
         return np.random.choice(range(len(value_estimates)), p=probabilities)
+    
+    def get_action_probabilities(self, value_estimates: np.ndarray[float]) -> np.ndarray[float]:
+        raise NotImplementedError()
 
 
 class EpsilonGreedy(ActionSelectionRule):
@@ -42,6 +55,12 @@ class EpsilonGreedy(ActionSelectionRule):
         if rand < self.epsilon:
             return np.random.choice(len(value_estimates))
         return np.random.choice(self.ids_of_max_value(value_estimates))
+    
+    def get_action_probabilities(self, value_estimates: np.ndarray[float]) -> np.ndarray[float]:
+        possibilities = self.ids_of_max_value(value_estimates)
+        probs = np.ones(len(value_estimates)) * self.epsilon / len(value_estimates)
+        probs[possibilities] += 1/len(possibilities) * (1 - self.epsilon)
+        return probs
 
 
 class UpperConfidenceBound(ActionSelectionRule):
@@ -69,3 +88,6 @@ class UpperConfidenceBound(ActionSelectionRule):
     def reset(self):
         self.action_counter = np.zeros(self.n_arms)
         self.time_steps = 0
+
+    def get_action_probabilities(self, value_estimates: np.ndarray[float]) -> np.ndarray[float]:
+        raise NotImplementedError()
